@@ -83,12 +83,13 @@
   (setq org-latex-pdf-process '("latexmk -shell-escape -f -pdf -%latex -interaction=nonstopmode -output-directory=%o %f"))
   (add-to-list 'org-latex-packages-alist '("newfloat" "minted")))
 
-;; (after! org
-;;   (load-file (concat doom-private-dir "+latex-snippets.el"))
-;;   (map! :g :map org-mode-map
-;;         "C-S-SPC" #'+latex-snippets-expand-or-complete)
-;;   (set-company-backend! 'org-mode #'+latex-snippets-company)
-;;   (load-file (concat doom-private-dir "+drawing.el")))
+(after! org
+  (load-file (concat doom-private-dir "+latex-snippets.el"))
+  (map! :g :map org-mode-map
+        "C-S-SPC" #'+latex-snippets-expand-or-complete)
+  (set-company-backend! 'org-mode #'+latex-snippets-company)
+  ;; (load-file (concat doom-private-dir "+drawing.el"))
+  )
 
 ;; Here are some additional functions/macros that could help you configure Doom:
 ;;

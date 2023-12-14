@@ -20,10 +20,13 @@
   '("rv3"))
 (defvar +latex-snippets-named-snippets
   '(("lim" "\\lim\\limits_{x \\to ${1:\\infty}}{${2:f(x)}}" :wrap 2)
-    ("abs" "\\left|${1:abs}\\right|")))
+    ("abs" "\\left|${1:abs}\\right|")
+    ("sum" "\\sum_{i=$1}^{$2} ${3:i}")))
 (defvar +latex-snippets-functions
   '(("frac" ("nom" "denom"))
-    ("sqrt" ("rad"))))
+    ("sqrt" ("rad"))
+    ("text" ("text"))
+    ("stackrel" ("above" "below"))))
 
 (defun +latex-snippets--snippet-matcher (s) (elt s 0))
 (defun +latex-snippets--snippet-expansion (s) (elt s 1))
@@ -50,7 +53,9 @@
         (let* ((args (+latex-snippets--snippet-expansion f))
                (args-yas (cl-loop for arg in args for i from 1
                                   collect (format "{${%d:%s}}" i arg))))
-          (list word (format "\\\\%s%s" word (string-join args-yas "")))))))
+          (list word (format "\\\\%s%s" word (string-join args-yas "")))))
+      (when-let ((entity (cl-find word +latex-snippets--org-pretty-entities :test #'string=)))
+        (list entity (concat "\\" entity)))))
 
 (defun +latex-snippets--all-matches (s)
   (cl-loop for (start end) on (cddr (match-data)) by #'cddr
@@ -83,17 +88,29 @@
 
 
 ;;* interactive
+(defvar +latex-snippets--org-pretty-entities
+  (cl-delete-duplicates
+   (cl-loop for entry in (append org-entities-user org-entities)
+            when (and (listp entry)
+                      (string-match-p "\\`\\\\[[:alpha:]]+\\({}\\)?\\'" (nth 1 entry)))
+            collect (cl-destructuring-bind (_ name _ _ _ _ pretty) entry
+                      (propertize (string-remove-prefix "\\" name)
+                                  'pretty pretty)))
+   :test #'string=))
+
 (defun +latex-snippets--candidates ()
- (append +latex-snippets-extra-canidates
+  (append +latex-snippets-extra-canidates
           (mapcar #'+latex-snippets--snippet-matcher +latex-snippets-named-snippets)
-          (mapcar #'+latex-snippets--snippet-matcher +latex-snippets-functions)))
+          (mapcar #'+latex-snippets--snippet-matcher +latex-snippets-functions)
+          +latex-snippets--org-pretty-entities))
 
 (defun +latex-snippets--completions (prefix)
   (let ((cands (+latex-snippets--candidates))
         (prefix (string-remove-prefix "\\" prefix)))
     (if (string-empty-p prefix)
         cands
-      (cl-delete-if-not (lambda (c) (string-prefix-p prefix c)) cands))))
+      (cl-remove-if-not (lambda (c) (string-prefix-p prefix c))
+                        cands))))
 
 (defun +latex-snippets--completing-read ()
   (completing-read "LaTeX: " (+latex-snippets--candidates)))
@@ -155,7 +172,8 @@
     (post-completion
      (delete-region (- (point) (length company-prefix) (length arg)) (point))
      (+latex-snippets-expand arg))
-    (kind 'snippet)))
+    (kind 'snippet)
+    (annotation (get-text-property 0 'pretty arg))))
 
 (defun +latex-snippets-expand-or-complete ()
   (interactive)
