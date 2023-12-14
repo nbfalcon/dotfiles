@@ -76,11 +76,40 @@
                 (cl-letf (((symbol-function 'display-warning) #'ignore))
                   (apply f args)))))
 
+;; FIXME: this is slightly off... maybe advise org--create-inline-image
+;; org hidpi previews
+;; (setq org-preview-latex-default-process 'dvisvgm)
+;; (defun +org--rescale-overlays (to-scale)
+;;   (dolist (overlay (overlays-in (point-min) (point-max)))
+;;     (when (eq 'org-latex-overlay (overlay-get overlay 'org-overlay-type))
+;;       (setf (plist-get (cdr (overlay-get overlay 'display)) :scale)
+;;             (/ to-scale (or (plist-get org-format-latex-options :scale) 1))))))
+;; (defun +doom--font-size ()
+;;   (font-get (doom-normalize-font doom-font) :size))
+;; (defcustom +org-mode-scale-baseline (/ 1.5 16)
+;;   "FIXME"
+;;   :set (lambda (symbol new-value)
+;;          (set symbol new-value)
+;;          (when (featurep 'org)
+;;            (+doom-font-size-rescale-latex-previews-a))))
+;; (after! org
+;;   (defadvice! +doom-font-size-rescale-latex-previews-a (&rest _args)
+;;     "Rescale LaTeX previews"
+;;     :after #'doom-adjust-font-size
+;;     (dolist (buffer (buffer-list))
+;;       (when (eq 'org-mode (buffer-local-value 'major-mode buffer))
+;;         (with-current-buffer buffer
+;;           (let ((scale (* (+doom--font-size) +org-mode-scale-baseline)))
+;;             (+org--rescale-overlays scale)
+;;             (setf (plist-get org-format-latex-options :scale) scale)))))))
+
 ;; minted
 (after! ox-latex
   (setq org-latex-compiler "xelatex")
   (setq org-latex-listings 'minted)
   (setq org-latex-pdf-process '("latexmk -shell-escape -f -pdf -%latex -interaction=nonstopmode -output-directory=%o %f"))
+  (setq org-latex-listings-options '(("breaklines" "true")))
+  (setq org-latex-minted-options '(("breaklines" "true")))
   (add-to-list 'org-latex-packages-alist '("newfloat" "minted")))
 
 (after! org
